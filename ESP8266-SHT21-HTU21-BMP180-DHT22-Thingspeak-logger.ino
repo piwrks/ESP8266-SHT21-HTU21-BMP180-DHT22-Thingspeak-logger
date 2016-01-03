@@ -33,7 +33,7 @@ extern "C" {
 }
 #include "DHT.h"  //https://github.com/adafruit/DHT-sensor-library V1.2.3
 
-#define DHTPIN 12     // what pin we're connected to
+#define DHTPIN 12     // what pin we're connected to -> 12 = D6 on ESP8266
 
 // Uncomment whatever type you're using!
 //#define DHTTYPE DHT11   // DHT 11 
@@ -69,7 +69,7 @@ void turnOff(int pin) {
 
 void setup() {
   Serial.begin(115200);
-  Wire.begin(4, 5);            //  SDA D2, SCL D1
+  Wire.begin(4, 5);            //  SDA = D2, SCL = D1
   Wire.setClock(400000);
  if (!bmp.begin()) {
   Serial.println("Could not find a valid BMP085 sensor, check wiring!");
