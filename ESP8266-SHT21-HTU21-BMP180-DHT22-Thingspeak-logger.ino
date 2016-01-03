@@ -129,7 +129,7 @@ void loop() {
   unsigned int rawTemperature = htdu21d_readTemp();
   String temp = String(dht.readTemperature());
   String humidity = String(dht.readHumidity());
-  String pressure = String(bmp.readSealevelPressure(altitude));
+  String pressure = String(bmp.readSealevelPressure(altitude)/100.0); // pressure in hPA/mBar
   String lux = String(getLux());
   String shttemp = String (calc_temp(rawTemperature));
   String shthum = String (calc_humidity(rawHumidity));
