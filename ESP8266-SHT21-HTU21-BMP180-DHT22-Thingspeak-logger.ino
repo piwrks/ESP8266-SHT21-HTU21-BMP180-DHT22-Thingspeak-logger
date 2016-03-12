@@ -1,11 +1,5 @@
-/*
- *  This sketch sends data via HTTP GET requests to thingspeak service every 10 minutes
- *  You have to set your wifi credentials and your thingspeak key.
- *  Arduino 1.65
- *  thanks to Dani Eichhorn -> http://blog.squix.ch
- 
-The MIT License (MIT)
-
+/**The MIT License (MIT)
+Copyright (c) 2015 by Daniel Eichhorn
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -21,7 +15,12 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+thanks to Dani Eichhorn -> http://blog.squix.ch
 
+ *  This sketch sends data via HTTP GET requests to thingspeak service every 10 minutes
+ *  You have to set your wifi credentials and your thingspeak key.
+ *  Arduino 1.65
+ *  added humidex, heatindex, dewpoint, battery voltage
  */
 
 #include <Adafruit_BMP085.h>  //https://github.com/adafruit/Adafruit-BMP085-Library V1.0
@@ -33,7 +32,7 @@ extern "C" {
 }
 #include "DHT.h"  //https://github.com/adafruit/DHT-sensor-library V1.2.3
 
-#define DHTPIN 12     // what pin we're connected to -> 12 = D6 on ESP8266
+#define DHTPIN 12     // what pin we're connected to
 
 // Uncomment whatever type you're using!
 //#define DHTTYPE DHT11   // DHT 11 
@@ -55,12 +54,12 @@ DHT dht(DHTPIN, DHTTYPE, 15);
 Adafruit_BMP085 bmp; // Create the bmp object
 int altitude = 385; // Höhe des Sensorstandortes ueber dem Meeresspiegel
 
-const char* ssid     = "YOURSSID";
-const char* password = "YOURPASSWORD";
+const char* ssid     = "XXXXXXXXXXXX";
+const char* password = "XXXXXXXXXXXX";
 
 
 const char* host = "api.thingspeak.com";
-const char* thingspeak_key = "YOURWRITEAPI";
+const char* thingspeak_key = "XXXXXXXXXXXX"; //write key
 
 void turnOff(int pin) {
   pinMode(pin, OUTPUT);
@@ -69,7 +68,7 @@ void turnOff(int pin) {
 
 void setup() {
   Serial.begin(115200);
-  Wire.begin(4, 5);            //  SDA = D2, SCL = D1
+  Wire.begin(4, 5);            //  i2C SDA D2, SCL D1
   Wire.setClock(400000);
  if (!bmp.begin()) {
   Serial.println("Could not find a valid BMP085 sensor, check wiring!");
@@ -110,6 +109,10 @@ void setup() {
 
 int value = 0;
 
+int r1 = 3300; //Voltage Divider (220k on board added 110k from Battery + to A0 pin)
+int r2 = 1000; //Voltage Divider (100k on board)
+int vref = 980; //Internal vref of your Nodemcu/WEMOS D1 mini alternativ 985
+
 
 void loop() {
   delay(5000);
@@ -127,27 +130,43 @@ void loop() {
   }
   unsigned int rawHumidity = htdu21d_readHumidity();
   unsigned int rawTemperature = htdu21d_readTemp();
-  String temp = String(dht.readTemperature());
-  String humidity = String(dht.readHumidity());
-  String pressure = String(bmp.readSealevelPressure(altitude)/100.0); // pressure in hPA/mBar
+  //String temp = String(dht.readTemperature());
+  //String humidity = String(dht.readHumidity());
+  String pressure = String(bmp.readSealevelPressure(altitude)/100.0F); // pressure in hPA/mBar , ohne nachkommastellen = (bmp.readSealevelPressure(altitude)/100.0F, 0);
   String lux = String(getLux());
   String shttemp = String (calc_temp(rawTemperature));
   String shthum = String (calc_humidity(rawHumidity));
+  String dewpoint = String (dewPoint(calc_temp(rawTemperature), (calc_humidity(rawHumidity))));  
+  String shttempfahrenheit = String (Fahrenheit(calc_temp(rawTemperature)));
+  float h = (calc_humidity(rawHumidity));
+  float t = (calc_temp(rawTemperature));
+  float f = (Fahrenheit(calc_temp(rawTemperature)));
+  float hi = dht.computeHeatIndex(f, h);
+  float heatindex = dht.convertFtoC(hi);
+  float humidex = calculate_humidex (t, h);
+  float adc_value = analogRead(A0); //adc.read(0)
+  float battery = vref * (adc_value) * (r1 + r2) / r2 / 1024 / 1000;
+   
   
   String url = "/update?key=";
   url += thingspeak_key;
   url += "&field1=";
-  url += temp;
+  url += shttemp;
   url += "&field2=";
-  url += humidity;
+  url += shthum;
   url += "&field3=";
   url += pressure;
   url += "&field4=";
   url += lux;
+  url += "&field5=";
+  url += dewpoint;
   url += "&field6=";
-  url += shttemp;
+  url += heatindex;
   url += "&field7=";
-  url += shthum;
+  url += humidex;
+  url += "&field8=";
+  url += battery;
+
   
   Serial.print("Requesting URL: ");
   Serial.println(url);
@@ -168,15 +187,92 @@ void loop() {
   Serial.println("closing connection. going to sleep...");
   delay(1000);
   // go to deepsleep for 10 minutes
-  system_deep_sleep_set_option(0);
+
+  //WAKE_RF_DEFAULT = 0, // RF_CAL or not after deep-sleep wake up, depends on init data byte 108.
+  //WAKE_RFCAL = 1,      // RF_CAL after deep-sleep wake up, there will be large current.
+  //WAKE_NO_RFCAL = 2,   // no RF_CAL after deep-sleep wake up, there will only be small current.
+  //WAKE_RF_DISABLED = 4 // disable RF after deep-sleep wake up, just like modem sleep, there will be the smallest current.
+  //ESP.deepSleep(10 * 60 * 1000000, WAKE_RF_DEFAULT); // GPIO16 needs to be tied to RST to wake from deepSleep.
+  system_deep_sleep_set_option(0); // GPIO16/D0 needs to be tied to RST to wake from deepSleep.
   system_deep_sleep(10 * 60 * 1000000);
+ }
+
+//Celsius to Fahrenheit conversion
+double Fahrenheit(double celsius)
+{
+  return 1.8 * celsius + 32;
 }
 
+// fast integer version with rounding
+//int Celcius2Fahrenheit(int celcius)
+//{
+//  return (celsius * 18 + 5)/10 + 32;
+//}
+
+//Fahrenheit to Celsius conversion
+double Celsius(double Fahrenheit)
+{
+  return (Fahrenheit - 32) * 0.55555;
+}
+
+
+//Celsius to Kelvin conversion
+double Kelvin(double celsius)
+{
+  return celsius + 273.15;
+}
+
+// dewPoint function NOAA
+// reference (1) : http://wahiduddin.net/calc/density_algorithms.htm
+// reference (2) : http://www.colorado.edu/geography/weather_station/Geog_site/about.htm
+//
+double dewPoint(double celsius, double humidity)
+{
+  // (1) Saturation Vapor Pressure = ESGG(T)
+  double RATIO = 373.15 / (273.15 + celsius);
+  double RHS = -7.90298 * (RATIO - 1);
+  RHS += 5.02808 * log10(RATIO);
+  RHS += -1.3816e-7 * (pow(10, (11.344 * (1 - 1/RATIO ))) - 1) ;
+  RHS += 8.1328e-3 * (pow(10, (-3.49149 * (RATIO - 1))) - 1) ;
+  RHS += log10(1013.246);
+
+        // factor -3 is to adjust units - Vapor Pressure SVP * humidity
+  double VP = pow(10, RHS - 3) * humidity;
+
+        // (2) DEWPOINT = F(Vapor Pressure)
+  double T = log(VP/0.61078);   // temp var
+  return (241.88 * T) / (17.558 - T);
+}
+
+// delta max = 0.6544 wrt dewPoint()
+// 6.9 x faster than dewPoint()
+// reference: http://en.wikipedia.org/wiki/Dew_point
+double dewPointFast(double celsius, double humidity)
+{
+  double a = 17.271;
+  double b = 237.7;
+  double temp = (a * celsius) / (b + celsius) + log(humidity*0.01);
+  double Td = (b * temp) / (a - temp);
+  return Td;
+}
+
+//function to calculete Humidex
+
+float calculate_humidex(float temperature,float humidity) {
+  float e;
+
+  e = (6.112 * pow(10,(7.5 * temperature/(237.7 + temperature))) * humidity/100); //vapor pressure
+
+  float humidex = temperature + 0.55555555 * (e - 10.0); //humidex
+  return humidex;
+
+}
 
 //--------------------------------- Light intensity
  float getLux(){
   byte dmsb,dlsb;
   float lx;
+  
   // BH1750 address is 0x5c or 0x23 
   
   Wire.beginTransmission(0x23);
@@ -369,3 +465,4 @@ unsigned int check_crc(uint16_t message_from_sensor, uint8_t check_value_from_se
 
   return remainder;
 }
+
