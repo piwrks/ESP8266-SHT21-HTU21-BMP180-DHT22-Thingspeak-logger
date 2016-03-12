@@ -17,3 +17,5 @@ Puts up the following values to thingspeak:
 - Battery voltage of the node
 - Dewpoint
 - Pressure
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/g3ziCE5joGM" frameborder="0" allowfullscreen></iframe>
