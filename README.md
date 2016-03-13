@@ -54,6 +54,8 @@ http://www.ebay.com/itm/Hot-3-7V-6000mAh-18650-Li-ion-Rechargeable-Battery-for-F
 Battery holder:
 http://www.ebay.com/itm/New-Hot-5Pcs-Battery-Case-Box-Holder-for-18650-Li-ion-Batteries-Cell-3-7V-/252091236855
 
+Resistor:
+110k
 
 
 
