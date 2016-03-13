@@ -48,6 +48,14 @@ http://www.ebay.com/itm/New-SHT21-Digital-Humidity-And-Temperature-Sensor-Module
 DC StepUp Module:
 http://www.ebay.com/itm/111851597705
 
+Battery:
+http://www.ebay.com/itm/Hot-3-7V-6000mAh-18650-Li-ion-Rechargeable-Battery-for-Flashlight-/291618980078
+
+Battery holder:
+http://www.ebay.com/itm/New-Hot-5Pcs-Battery-Case-Box-Holder-for-18650-Li-ion-Batteries-Cell-3-7V-/252091236855
+
+
+
 
 
 
