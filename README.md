@@ -1,5 +1,7 @@
 # ESP8266-SHT21-HTU21-BMP180-DHT22-Thingspeak-logger
 
+Based on the https://github.com/squix78/esp8266-projects/tree/master/arduino-ide/thingspeak-data-logger
+
 ESP8266 / Wemos D1 mini with BMP180,  SHT21 / HTU21 18650 Lipo, Lipo Charger with protection circuit and a BH1750 Sensor.
 The BH1750 is not visible in the video.
 
