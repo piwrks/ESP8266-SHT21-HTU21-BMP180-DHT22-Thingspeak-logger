@@ -37,12 +37,12 @@ www.aliexpress.com/item/1PCS-GY-68-BMP180-Replace-BMP085-Digital-Barometric-Pres
 Lux Sensor
 www.aliexpress.com/item/GY-302-BH1750-BH1750FVI-light-intensity-illumination-module-for-arduino-3V-5V/32341898423.html
 
-Temp/Humidity Sensor:
+Temp/Humidity Sensor HTU21:
 http://www.ebay.com/itm/181962636668
 
 or
 
-Temp/Humidity Sensor:
+Temp/Humidity Sensor SHT21:
 http://www.ebay.com/itm/New-SHT21-Digital-Humidity-And-Temperature-Sensor-Module-Replace-SHT11-SHT15-/131156012885
 
 DC StepUp Module:
